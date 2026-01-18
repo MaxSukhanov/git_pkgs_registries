@@ -15,7 +15,7 @@ import (
 func TestSupportedEcosystems(t *testing.T) {
 	ecosystems := registries.SupportedEcosystems()
 
-	expected := []string{"cargo", "gem", "golang", "npm", "pypi"}
+	expected := []string{"brew", "cargo", "clojars", "cocoapods", "composer", "conda", "cpan", "cran", "deno", "dub", "elm", "gem", "golang", "hackage", "haxelib", "hex", "julia", "luarocks", "maven", "nimble", "npm", "nuget", "pub", "pypi", "terraform"}
 	sort.Strings(ecosystems)
 
 	if len(ecosystems) != len(expected) {
@@ -34,11 +34,31 @@ func TestNew(t *testing.T) {
 		ecosystem string
 		wantErr   bool
 	}{
+		{"brew", false},
 		{"cargo", false},
 		{"npm", false},
 		{"gem", false},
 		{"pypi", false},
 		{"golang", false},
+		{"hex", false},
+		{"pub", false},
+		{"composer", false},
+		{"nuget", false},
+		{"maven", false},
+		{"cocoapods", false},
+		{"clojars", false},
+		{"cpan", false},
+		{"hackage", false},
+		{"cran", false},
+		{"conda", false},
+		{"julia", false},
+		{"elm", false},
+		{"dub", false},
+		{"luarocks", false},
+		{"nimble", false},
+		{"haxelib", false},
+		{"deno", false},
+		{"terraform", false},
 		{"unknown", true},
 	}
 
@@ -57,11 +77,31 @@ func TestDefaultURL(t *testing.T) {
 		ecosystem string
 		want      string
 	}{
+		{"brew", "https://formulae.brew.sh"},
 		{"cargo", "https://crates.io"},
 		{"npm", "https://registry.npmjs.org"},
 		{"gem", "https://rubygems.org"},
 		{"pypi", "https://pypi.org"},
 		{"golang", "https://proxy.golang.org"},
+		{"hex", "https://hex.pm"},
+		{"pub", "https://pub.dev"},
+		{"composer", "https://packagist.org"},
+		{"nuget", "https://api.nuget.org/v3"},
+		{"maven", "https://repo1.maven.org/maven2"},
+		{"cocoapods", "https://trunk.cocoapods.org"},
+		{"clojars", "https://clojars.org"},
+		{"cpan", "https://fastapi.metacpan.org"},
+		{"hackage", "https://hackage.haskell.org"},
+		{"cran", "https://cran.r-project.org"},
+		{"conda", "https://api.anaconda.org"},
+		{"julia", "https://raw.githubusercontent.com/JuliaRegistries/General/master"},
+		{"elm", "https://package.elm-lang.org"},
+		{"dub", "https://code.dlang.org"},
+		{"luarocks", "https://luarocks.org"},
+		{"nimble", "https://nimble.directory"},
+		{"haxelib", "https://lib.haxe.org"},
+		{"deno", "https://apiland.deno.dev"},
+		{"terraform", "https://registry.terraform.io"},
 	}
 
 	for _, tt := range tests {

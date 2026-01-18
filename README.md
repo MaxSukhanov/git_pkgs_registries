@@ -1,6 +1,6 @@
 # registries
 
-Go library for fetching package metadata from registry APIs. Supports npm, PyPI, Cargo, RubyGems, and Go modules with a unified interface.
+Go library for fetching package metadata from registry APIs. Supports 25 ecosystems including npm, PyPI, Cargo, RubyGems, Go modules, Maven, NuGet, Packagist, Hex, Pub, CocoaPods, Clojars, CPAN, Hackage, CRAN, Conda, Julia, Elm, Dub, LuaRocks, Nimble, Haxelib, Homebrew, Deno, and Terraform with a unified interface.
 
 ## Installation
 
@@ -59,6 +59,26 @@ import (
 | RubyGems | `gem` | https://rubygems.org |
 | PyPI | `pypi` | https://pypi.org |
 | Go | `golang` | https://proxy.golang.org |
+| Maven | `maven` | https://repo1.maven.org/maven2 |
+| NuGet | `nuget` | https://api.nuget.org/v3 |
+| Packagist | `composer` | https://packagist.org |
+| Hex | `hex` | https://hex.pm |
+| Pub | `pub` | https://pub.dev |
+| CocoaPods | `cocoapods` | https://trunk.cocoapods.org |
+| Clojars | `clojars` | https://clojars.org |
+| CPAN | `cpan` | https://fastapi.metacpan.org |
+| Hackage | `hackage` | https://hackage.haskell.org |
+| CRAN | `cran` | https://cran.r-project.org |
+| Conda | `conda` | https://api.anaconda.org |
+| Julia | `julia` | https://raw.githubusercontent.com/JuliaRegistries/General/master |
+| Elm | `elm` | https://package.elm-lang.org |
+| Dub | `dub` | https://code.dlang.org |
+| LuaRocks | `luarocks` | https://luarocks.org |
+| Nimble | `nimble` | https://nimble.directory |
+| Haxelib | `haxelib` | https://lib.haxe.org |
+| Homebrew | `brew` | https://formulae.brew.sh |
+| Deno | `deno` | https://apiland.deno.dev |
+| Terraform | `terraform` | https://registry.terraform.io |
 
 ## API
 
