@@ -35,6 +35,7 @@ package registries
 import (
 	"context"
 
+	"github.com/git-pkgs/purl"
 	"github.com/git-pkgs/registries/internal/core"
 )
 
@@ -140,12 +141,12 @@ func DefaultURL(ecosystem string) string {
 }
 
 // PURL represents a parsed Package URL.
-type PURL = core.PURL
+type PURL = purl.PURL
 
 // ParsePURL parses a Package URL string into its components.
 // Supports both package PURLs (pkg:cargo/serde) and version PURLs (pkg:cargo/serde@1.0.0).
-func ParsePURL(purl string) (*PURL, error) {
-	return core.ParsePURL(purl)
+func ParsePURL(purlStr string) (*PURL, error) {
+	return purl.Parse(purlStr)
 }
 
 // NewFromPURL creates a registry client from a PURL and returns the parsed components.

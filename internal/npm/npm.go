@@ -119,7 +119,7 @@ func (r *Registry) FetchPackage(ctx context.Context, name string) (*core.Package
 		Description:   coalesceString(latest.Description, resp.Description),
 		Homepage:      extractString(resp.Homepage),
 		Repository:    extractRepoURL(resp.Repository, latest.Repository),
-		Licenses:      extractLicense(latest.License),
+		Licenses:      core.ExtractLicense(latest.License),
 		Keywords:      extractKeywords(latest.Keywords),
 		Namespace:     extractNamespace(resp.ID),
 		LatestVersion: latestVersion,
@@ -164,7 +164,7 @@ func (r *Registry) FetchVersions(ctx context.Context, name string) ([]core.Versi
 		versions = append(versions, core.Version{
 			Number:      num,
 			PublishedAt: publishedAt,
-			Licenses:    extractLicense(v.License),
+			Licenses:    core.ExtractLicense(v.License),
 			Integrity:   integrity,
 			Status:      status,
 			Metadata: map[string]any{
@@ -287,31 +287,6 @@ func extractRepoURL(pkgRepo, versionRepo interface{}) string {
 				}
 			}
 		}
-	}
-	return ""
-}
-
-func extractLicense(v interface{}) string {
-	switch l := v.(type) {
-	case string:
-		return l
-	case map[string]interface{}:
-		if t, ok := l["type"].(string); ok {
-			return t
-		}
-	case []interface{}:
-		var licenses []string
-		for _, item := range l {
-			switch li := item.(type) {
-			case string:
-				licenses = append(licenses, li)
-			case map[string]interface{}:
-				if t, ok := li["type"].(string); ok {
-					licenses = append(licenses, t)
-				}
-			}
-		}
-		return strings.Join(licenses, ",")
 	}
 	return ""
 }

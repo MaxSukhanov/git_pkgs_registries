@@ -2,11 +2,111 @@ package core
 
 import (
 	"context"
+	"fmt"
 	"sort"
 	"sync"
+
+	"github.com/git-pkgs/purl"
 )
 
 const defaultConcurrency = 15
+
+// NewFromPURL creates a registry client from a PURL and returns the parsed components.
+// Returns the registry, full package name, and version (empty if not in PURL).
+// If the PURL has a repository_url qualifier, it's used as the base URL for private registries.
+func NewFromPURL(purlStr string, client *Client) (Registry, string, string, error) {
+	p, err := purl.Parse(purlStr)
+	if err != nil {
+		return nil, "", "", err
+	}
+
+	// Extract repository_url qualifier for private registry support
+	baseURL := p.RepositoryURL()
+
+	reg, err := New(p.Type, baseURL, client)
+	if err != nil {
+		return nil, "", "", err
+	}
+
+	return reg, p.FullName(), p.Version, nil
+}
+
+// FetchPackageFromPURL fetches package metadata using a PURL.
+func FetchPackageFromPURL(ctx context.Context, purlStr string, client *Client) (*Package, error) {
+	reg, name, _, err := NewFromPURL(purlStr, client)
+	if err != nil {
+		return nil, err
+	}
+
+	return reg.FetchPackage(ctx, name)
+}
+
+// FetchVersionFromPURL fetches a specific version's metadata using a PURL.
+// Returns an error if the PURL doesn't include a version.
+func FetchVersionFromPURL(ctx context.Context, purlStr string, client *Client) (*Version, error) {
+	p, err := purl.Parse(purlStr)
+	if err != nil {
+		return nil, err
+	}
+
+	if p.Version == "" {
+		return nil, fmt.Errorf("PURL has no version: %s", purlStr)
+	}
+
+	baseURL := p.RepositoryURL()
+	reg, err := New(p.Type, baseURL, client)
+	if err != nil {
+		return nil, err
+	}
+
+	versions, err := reg.FetchVersions(ctx, p.FullName())
+	if err != nil {
+		return nil, err
+	}
+
+	for _, v := range versions {
+		if v.Number == p.Version {
+			return &v, nil
+		}
+	}
+
+	return nil, &NotFoundError{
+		Ecosystem: p.Type,
+		Name:      p.FullName(),
+		Version:   p.Version,
+	}
+}
+
+// FetchDependenciesFromPURL fetches dependencies for a specific version using a PURL.
+// Returns an error if the PURL doesn't include a version.
+func FetchDependenciesFromPURL(ctx context.Context, purlStr string, client *Client) ([]Dependency, error) {
+	p, err := purl.Parse(purlStr)
+	if err != nil {
+		return nil, err
+	}
+
+	if p.Version == "" {
+		return nil, fmt.Errorf("PURL has no version: %s", purlStr)
+	}
+
+	baseURL := p.RepositoryURL()
+	reg, err := New(p.Type, baseURL, client)
+	if err != nil {
+		return nil, err
+	}
+
+	return reg.FetchDependencies(ctx, p.FullName(), p.Version)
+}
+
+// FetchMaintainersFromPURL fetches maintainer information using a PURL.
+func FetchMaintainersFromPURL(ctx context.Context, purlStr string, client *Client) ([]Maintainer, error) {
+	reg, name, _, err := NewFromPURL(purlStr, client)
+	if err != nil {
+		return nil, err
+	}
+
+	return reg.FetchMaintainers(ctx, name)
+}
 
 // FetchLatestVersion returns the latest non-yanked/retracted/deprecated version.
 // Returns nil if no valid versions exist.

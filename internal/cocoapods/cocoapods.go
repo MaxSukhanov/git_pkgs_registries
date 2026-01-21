@@ -114,7 +114,7 @@ func (r *Registry) FetchPackage(ctx context.Context, name string) (*core.Package
 		}
 		pkg.Homepage = latestSpec.Homepage
 		pkg.Repository = extractRepository(latestSpec.Source)
-		pkg.Licenses = extractLicense(latestSpec.License)
+		pkg.Licenses = core.ExtractLicense(latestSpec.License)
 	}
 
 	return pkg, nil
@@ -129,18 +129,6 @@ func extractRepository(source map[string]interface{}) string {
 	if http, ok := source["http"].(string); ok {
 		if parsed := urlparser.Parse(http); parsed != "" {
 			return parsed
-		}
-	}
-	return ""
-}
-
-func extractLicense(license interface{}) string {
-	switch v := license.(type) {
-	case string:
-		return v
-	case map[string]interface{}:
-		if licType, ok := v["type"].(string); ok {
-			return licType
 		}
 	}
 	return ""
@@ -162,7 +150,7 @@ func (r *Registry) FetchVersions(ctx context.Context, name string) ([]core.Versi
 		versions[i] = core.Version{
 			Number:      v.Name,
 			PublishedAt: v.CreatedAt,
-			Licenses:    extractLicense(v.Spec.License),
+			Licenses:    core.ExtractLicense(v.Spec.License),
 		}
 	}
 

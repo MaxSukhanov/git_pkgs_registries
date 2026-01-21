@@ -154,23 +154,14 @@ func extractHomepage(projectURLs map[string]string, homePage string) string {
 }
 
 func extractLicense(info infoBlock) string {
+	// LicenseExpression is already SPDX-normalized by PyPI
 	if info.LicenseExpression != "" {
 		return info.LicenseExpression
 	}
 	if info.License != "" {
-		return info.License
+		return core.NormalizeLicense(info.License)
 	}
-
-	for _, classifier := range info.Classifiers {
-		if strings.HasPrefix(classifier, "License :: ") {
-			parts := strings.Split(classifier, " :: ")
-			if len(parts) > 0 {
-				return parts[len(parts)-1]
-			}
-		}
-	}
-
-	return ""
+	return core.ExtractLicenseFromClassifiers(info.Classifiers)
 }
 
 func parseKeywords(keywords string) []string {
