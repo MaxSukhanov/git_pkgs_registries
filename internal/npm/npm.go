@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/git-pkgs/registries/internal/core"
+	"github.com/git-pkgs/registries/internal/urlparser"
 )
 
 const (
@@ -266,32 +267,28 @@ func extractRepoURL(pkgRepo, versionRepo interface{}) string {
 	for _, repo := range []interface{}{versionRepo, pkgRepo} {
 		switch r := repo.(type) {
 		case string:
-			return normalizeGitURL(r)
+			if parsed := urlparser.Parse(r); parsed != "" {
+				return parsed
+			}
 		case map[string]interface{}:
 			if url, ok := r["url"].(string); ok {
-				return normalizeGitURL(url)
+				if parsed := urlparser.Parse(url); parsed != "" {
+					return parsed
+				}
 			}
 		case []interface{}:
 			if len(r) > 0 {
 				if m, ok := r[0].(map[string]interface{}); ok {
 					if url, ok := m["url"].(string); ok {
-						return normalizeGitURL(url)
+						if parsed := urlparser.Parse(url); parsed != "" {
+							return parsed
+						}
 					}
 				}
 			}
 		}
 	}
 	return ""
-}
-
-func normalizeGitURL(u string) string {
-	u = strings.TrimPrefix(u, "git+")
-	u = strings.TrimPrefix(u, "git://")
-	u = strings.TrimSuffix(u, ".git")
-	if strings.HasPrefix(u, "github.com/") {
-		u = "https://" + u
-	}
-	return u
 }
 
 func extractLicense(v interface{}) string {

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/git-pkgs/registries/internal/core"
+	"github.com/git-pkgs/registries/internal/urlparser"
 )
 
 const (
@@ -121,10 +122,14 @@ func (r *Registry) FetchPackage(ctx context.Context, name string) (*core.Package
 
 func extractRepository(source map[string]interface{}) string {
 	if git, ok := source["git"].(string); ok {
-		return strings.TrimSuffix(git, ".git")
+		if parsed := urlparser.Parse(git); parsed != "" {
+			return parsed
+		}
 	}
 	if http, ok := source["http"].(string); ok {
-		return http
+		if parsed := urlparser.Parse(http); parsed != "" {
+			return parsed
+		}
 	}
 	return ""
 }

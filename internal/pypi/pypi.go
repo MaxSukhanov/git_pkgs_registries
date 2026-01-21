@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/git-pkgs/registries/internal/core"
+	"github.com/git-pkgs/registries/internal/urlparser"
 )
 
 const (
@@ -117,20 +118,23 @@ func extractRepoURL(projectURLs map[string]string, homePage string) string {
 	priorityKeys := []string{"Repository", "Source", "Source Code", "Code"}
 	for _, key := range priorityKeys {
 		if url, ok := projectURLs[key]; ok && url != "" {
-			if isRepoURL(url) {
-				return url
+			if parsed := urlparser.Parse(url); parsed != "" {
+				return parsed
 			}
 		}
 	}
 
 	for _, url := range projectURLs {
-		if isRepoURL(url) && !strings.Contains(url, "github.com/sponsors") {
-			return url
+		if strings.Contains(url, "/sponsors") {
+			continue
+		}
+		if parsed := urlparser.Parse(url); parsed != "" {
+			return parsed
 		}
 	}
 
-	if isRepoURL(homePage) {
-		return homePage
+	if parsed := urlparser.Parse(homePage); parsed != "" {
+		return parsed
 	}
 
 	return ""
@@ -147,13 +151,6 @@ func extractHomepage(projectURLs map[string]string, homePage string) string {
 		return url
 	}
 	return ""
-}
-
-func isRepoURL(url string) bool {
-	return strings.Contains(url, "github.com") ||
-		strings.Contains(url, "gitlab.com") ||
-		strings.Contains(url, "bitbucket.org") ||
-		strings.Contains(url, "codeberg.org")
 }
 
 func extractLicense(info infoBlock) string {

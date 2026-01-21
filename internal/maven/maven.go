@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/git-pkgs/registries/internal/core"
+	"github.com/git-pkgs/registries/internal/urlparser"
 )
 
 const (
@@ -125,15 +126,29 @@ type pomDeveloper struct {
 	URL   string `xml:"url"`
 }
 
-// ParseCoordinates parses a Maven coordinate string (groupId:artifactId or groupId:artifactId:version)
+// ParseCoordinates parses a Maven coordinate string.
+// Accepts both "groupId:artifactId" (traditional) and "groupId/artifactId" (PURL FullName) formats.
+// Optionally includes version: "groupId:artifactId:version" or "groupId/artifactId/version"
 func ParseCoordinates(coord string) (groupID, artifactID, version string) {
+	// Try colon separator first (traditional maven format)
 	parts := strings.Split(coord, ":")
 	if len(parts) >= 2 {
 		groupID = parts[0]
 		artifactID = parts[1]
+		if len(parts) >= 3 {
+			version = parts[2]
+		}
+		return
 	}
-	if len(parts) >= 3 {
-		version = parts[2]
+
+	// Fall back to slash separator (PURL FullName format)
+	parts = strings.Split(coord, "/")
+	if len(parts) >= 2 {
+		groupID = parts[0]
+		artifactID = parts[1]
+		if len(parts) >= 3 {
+			version = parts[2]
+		}
 	}
 	return
 }
@@ -292,26 +307,7 @@ func (r *Registry) packageFromMetadataAndPOM(metadata mavenMetadata, pom *pomXML
 }
 
 func extractRepository(pom *pomXML) string {
-	if pom.SCM.URL != "" {
-		url := pom.SCM.URL
-		// Clean up common SCM URL prefixes
-		url = strings.TrimPrefix(url, "scm:git:")
-		url = strings.TrimPrefix(url, "scm:svn:")
-		url = strings.TrimSuffix(url, ".git")
-		if strings.HasPrefix(url, "git://") {
-			url = "https://" + strings.TrimPrefix(url, "git://")
-		}
-		return url
-	}
-	if pom.SCM.Connection != "" {
-		conn := pom.SCM.Connection
-		conn = strings.TrimPrefix(conn, "scm:git:")
-		conn = strings.TrimPrefix(conn, "scm:svn:")
-		if strings.HasPrefix(conn, "git://") || strings.HasPrefix(conn, "https://") || strings.HasPrefix(conn, "http://") {
-			return strings.TrimSuffix(conn, ".git")
-		}
-	}
-	return ""
+	return urlparser.FirstRepoURL(pom.SCM.URL, pom.SCM.Connection)
 }
 
 func formatLicenses(licenses []pomLicense) string {

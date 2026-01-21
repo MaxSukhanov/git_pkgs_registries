@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/git-pkgs/registries/internal/core"
+	"github.com/git-pkgs/registries/internal/urlparser"
 )
 
 const (
@@ -149,12 +150,7 @@ func (r *Registry) FetchPackage(ctx context.Context, name string) (*core.Package
 }
 
 func extractRepository(projectURL string) string {
-	if strings.Contains(projectURL, "github.com") ||
-		strings.Contains(projectURL, "gitlab.com") ||
-		strings.Contains(projectURL, "bitbucket.org") {
-		return projectURL
-	}
-	return ""
+	return urlparser.Parse(projectURL)
 }
 
 func (r *Registry) FetchVersions(ctx context.Context, name string) ([]core.Version, error) {

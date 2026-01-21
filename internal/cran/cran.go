@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/git-pkgs/registries/internal/core"
+	"github.com/git-pkgs/registries/internal/urlparser"
 )
 
 const (
@@ -177,9 +178,8 @@ func parseDescription(content string) descriptionInfo {
 func extractRepository(urlField string) string {
 	urls := strings.Split(urlField, ",")
 	for _, u := range urls {
-		u = strings.TrimSpace(u)
-		if strings.Contains(u, "github.com") || strings.Contains(u, "gitlab.com") || strings.Contains(u, "bitbucket.org") {
-			return u
+		if parsed := urlparser.Parse(strings.TrimSpace(u)); parsed != "" {
+			return parsed
 		}
 	}
 	return ""
