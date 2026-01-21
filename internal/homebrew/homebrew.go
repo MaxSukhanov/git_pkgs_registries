@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/git-pkgs/registries/internal/core"
+	"github.com/git-pkgs/registries/internal/urlparser"
 )
 
 const (
@@ -103,11 +104,8 @@ func (r *Registry) FetchPackage(ctx context.Context, name string) (*core.Package
 		return nil, err
 	}
 
-	// Extract repository URL from homepage if it's GitHub
-	repository := ""
-	if strings.Contains(resp.Homepage, "github.com") {
-		repository = resp.Homepage
-	}
+	// Extract repository URL from homepage
+	repository := urlparser.Parse(resp.Homepage)
 
 	var status string
 	if resp.Deprecated {

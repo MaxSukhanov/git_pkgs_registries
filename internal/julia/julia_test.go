@@ -54,7 +54,7 @@ func TestFetchPackage(t *testing.T) {
 	if pkg.Name != "JSON" {
 		t.Errorf("expected name 'JSON', got %q", pkg.Name)
 	}
-	if pkg.Repository != "https://github.com/JuliaIO/JSON.jl.git" {
+	if pkg.Repository != "https://github.com/JuliaIO/JSON.jl" {
 		t.Errorf("unexpected repository: %q", pkg.Repository)
 	}
 	if pkg.Metadata["uuid"] != "682c06a0-de6a-54ab-a142-c8b1cf79cde6" {

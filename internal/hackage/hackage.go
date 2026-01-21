@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/git-pkgs/registries/internal/core"
+	"github.com/git-pkgs/registries/internal/urlparser"
 )
 
 const (
@@ -114,10 +115,7 @@ func (r *Registry) FetchPackage(ctx context.Context, name string) (*core.Package
 
 	cabal := parseCabalFile(string(cabalBody))
 
-	var repository string
-	if cabal.SourceRepository != "" {
-		repository = cabal.SourceRepository
-	}
+	repository := urlparser.Parse(cabal.SourceRepository)
 
 	var keywords []string
 	if cabal.Category != "" {

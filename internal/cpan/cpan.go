@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/git-pkgs/registries/internal/core"
+	"github.com/git-pkgs/registries/internal/urlparser"
 )
 
 const (
@@ -115,9 +116,10 @@ func (r *Registry) FetchPackage(ctx context.Context, name string) (*core.Package
 
 	var repository string
 	if resp.Resources.Repository.Web != "" {
-		repository = resp.Resources.Repository.Web
-	} else if resp.Resources.Repository.URL != "" {
-		repository = resp.Resources.Repository.URL
+		repository = urlparser.Parse(resp.Resources.Repository.Web)
+	}
+	if repository == "" && resp.Resources.Repository.URL != "" {
+		repository = urlparser.Parse(resp.Resources.Repository.URL)
 	}
 
 	var licenses string

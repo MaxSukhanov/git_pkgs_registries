@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/git-pkgs/registries/internal/core"
+	"github.com/git-pkgs/registries/internal/urlparser"
 )
 
 const (
@@ -88,7 +89,7 @@ func (r *Registry) FetchPackage(ctx context.Context, name string) (*core.Package
 
 	// Go modules don't have rich metadata in the proxy protocol
 	// The repository URL is typically derived from the module path
-	repoURL := deriveRepoURL(name)
+	repoURL := urlparser.Parse(deriveRepoURL(name))
 
 	parts := strings.Split(name, "/")
 	namespace := ""

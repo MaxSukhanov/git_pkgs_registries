@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/git-pkgs/registries/internal/core"
+	"github.com/git-pkgs/registries/internal/urlparser"
 )
 
 const (
@@ -121,9 +122,7 @@ func (r *Registry) FetchPackage(ctx context.Context, name string) (*core.Package
 			homepage = v.Homepage
 		}
 		if v.Source.URL != "" && repository == "" {
-			repository = v.Source.URL
-			// Clean up .git suffix if present
-			repository = strings.TrimSuffix(repository, ".git")
+			repository = urlparser.Parse(v.Source.URL)
 		}
 		if len(v.License) > 0 && licenses == "" {
 			licenses = strings.Join(v.License, ",")
@@ -132,7 +131,7 @@ func (r *Registry) FetchPackage(ctx context.Context, name string) (*core.Package
 
 	// Fallback to package-level repository
 	if repository == "" && pkg.Repository != "" {
-		repository = strings.TrimSuffix(pkg.Repository, ".git")
+		repository = urlparser.Parse(pkg.Repository)
 	}
 
 	return &core.Package{

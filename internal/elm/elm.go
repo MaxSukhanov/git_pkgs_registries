@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/git-pkgs/registries/internal/core"
+	"github.com/git-pkgs/registries/internal/urlparser"
 )
 
 const (
@@ -113,7 +114,7 @@ func (r *Registry) FetchPackage(ctx context.Context, name string) (*core.Package
 		Name:        name,
 		Description: elmInfo.Summary,
 		Homepage:    fmt.Sprintf("https://package.elm-lang.org/packages/%s/%s/latest", author, pkgName),
-		Repository:  fmt.Sprintf("https://github.com/%s/%s", author, pkgName),
+		Repository:  urlparser.Parse(fmt.Sprintf("https://github.com/%s/%s", author, pkgName)),
 		Licenses:    elmInfo.License,
 		Namespace:   author,
 		Metadata: map[string]any{

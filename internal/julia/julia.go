@@ -10,6 +10,7 @@ import (
 	"unicode"
 
 	"github.com/git-pkgs/registries/internal/core"
+	"github.com/git-pkgs/registries/internal/urlparser"
 )
 
 const (
@@ -75,7 +76,7 @@ func (r *Registry) FetchPackage(ctx context.Context, name string) (*core.Package
 
 	return &core.Package{
 		Name:       pkg.name,
-		Repository: pkg.repo,
+		Repository: urlparser.Parse(pkg.repo),
 		Metadata: map[string]any{
 			"uuid":    pkg.uuid,
 			"subdir":  pkg.subdir,

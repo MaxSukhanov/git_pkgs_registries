@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/git-pkgs/registries/internal/core"
+	"github.com/git-pkgs/registries/internal/urlparser"
 )
 
 const (
@@ -98,7 +99,7 @@ func (r *Registry) FetchPackage(ctx context.Context, name string) (*core.Package
 
 	repository := ""
 	if resp.UploadOptions.Type == "github" && resp.UploadOptions.Repository != "" {
-		repository = "https://github.com/" + resp.UploadOptions.Repository
+		repository = urlparser.Parse("https://github.com/" + resp.UploadOptions.Repository)
 	}
 
 	return &core.Package{

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/git-pkgs/registries/internal/core"
+	"github.com/git-pkgs/registries/internal/urlparser"
 )
 
 const (
@@ -120,7 +121,7 @@ func (r *Registry) FetchPackage(ctx context.Context, name string) (*core.Package
 		Name:        resp.Crate.ID,
 		Description: resp.Crate.Description,
 		Homepage:    resp.Crate.Homepage,
-		Repository:  resp.Crate.Repository,
+		Repository:  urlparser.Parse(resp.Crate.Repository),
 		Licenses:    licenses,
 		Keywords:    resp.Crate.Keywords,
 		Metadata: map[string]any{

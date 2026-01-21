@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/git-pkgs/registries/internal/core"
+	"github.com/git-pkgs/registries/internal/urlparser"
 )
 
 const (
@@ -122,11 +123,8 @@ func (r *Registry) FetchPackage(ctx context.Context, name string) (*core.Package
 		return nil, err
 	}
 
-	// Extract GitHub repo from source
-	repository := resp.Source
-	if !strings.HasPrefix(repository, "http") && strings.Contains(repository, "github.com") {
-		repository = "https://" + repository
-	}
+	// Extract repository from source
+	repository := urlparser.Parse(resp.Source)
 
 	return &core.Package{
 		Name:        fmt.Sprintf("%s/%s/%s", resp.Namespace, resp.Name, resp.Provider),
