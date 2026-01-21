@@ -57,7 +57,7 @@ func TestFetchPackage(t *testing.T) {
 	if pkg.Repository != "https://github.com/psf/requests" {
 		t.Errorf("unexpected repository: %q", pkg.Repository)
 	}
-	if pkg.Licenses != "Apache 2.0" {
+	if pkg.Licenses != "Apache-2.0" {
 		t.Errorf("unexpected licenses: %q", pkg.Licenses)
 	}
 	if len(pkg.Keywords) != 3 {

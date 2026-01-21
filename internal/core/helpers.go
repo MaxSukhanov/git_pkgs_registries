@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"sort"
-	"sync"
 
 	"github.com/git-pkgs/purl"
 )
@@ -169,34 +168,9 @@ func BulkFetchPackages(ctx context.Context, purls []string, client *Client) map[
 
 // BulkFetchPackagesWithConcurrency fetches packages with a custom concurrency limit.
 func BulkFetchPackagesWithConcurrency(ctx context.Context, purls []string, client *Client, concurrency int) map[string]*Package {
-	results := make(map[string]*Package)
-	var mu sync.Mutex
-	sem := make(chan struct{}, concurrency)
-	var wg sync.WaitGroup
-
-	for _, purl := range purls {
-		wg.Add(1)
-		go func(p string) {
-			defer wg.Done()
-
-			select {
-			case sem <- struct{}{}:
-				defer func() { <-sem }()
-			case <-ctx.Done():
-				return
-			}
-
-			pkg, err := FetchPackageFromPURL(ctx, p, client)
-			if err == nil && pkg != nil {
-				mu.Lock()
-				results[p] = pkg
-				mu.Unlock()
-			}
-		}(purl)
-	}
-
-	wg.Wait()
-	return results
+	return ParallelMap(ctx, purls, concurrency, func(ctx context.Context, p string) (*Package, error) {
+		return FetchPackageFromPURL(ctx, p, client)
+	})
 }
 
 // BulkFetchVersions fetches version metadata for multiple versioned PURLs in parallel.
@@ -209,34 +183,9 @@ func BulkFetchVersions(ctx context.Context, purls []string, client *Client) map[
 
 // BulkFetchVersionsWithConcurrency fetches versions with a custom concurrency limit.
 func BulkFetchVersionsWithConcurrency(ctx context.Context, purls []string, client *Client, concurrency int) map[string]*Version {
-	results := make(map[string]*Version)
-	var mu sync.Mutex
-	sem := make(chan struct{}, concurrency)
-	var wg sync.WaitGroup
-
-	for _, purl := range purls {
-		wg.Add(1)
-		go func(p string) {
-			defer wg.Done()
-
-			select {
-			case sem <- struct{}{}:
-				defer func() { <-sem }()
-			case <-ctx.Done():
-				return
-			}
-
-			version, err := FetchVersionFromPURL(ctx, p, client)
-			if err == nil && version != nil {
-				mu.Lock()
-				results[p] = version
-				mu.Unlock()
-			}
-		}(purl)
-	}
-
-	wg.Wait()
-	return results
+	return ParallelMap(ctx, purls, concurrency, func(ctx context.Context, p string) (*Version, error) {
+		return FetchVersionFromPURL(ctx, p, client)
+	})
 }
 
 // BulkFetchLatestVersions fetches the latest version for multiple PURLs in parallel.
@@ -247,32 +196,7 @@ func BulkFetchLatestVersions(ctx context.Context, purls []string, client *Client
 
 // BulkFetchLatestVersionsWithConcurrency fetches latest versions with a custom concurrency limit.
 func BulkFetchLatestVersionsWithConcurrency(ctx context.Context, purls []string, client *Client, concurrency int) map[string]*Version {
-	results := make(map[string]*Version)
-	var mu sync.Mutex
-	sem := make(chan struct{}, concurrency)
-	var wg sync.WaitGroup
-
-	for _, purl := range purls {
-		wg.Add(1)
-		go func(p string) {
-			defer wg.Done()
-
-			select {
-			case sem <- struct{}{}:
-				defer func() { <-sem }()
-			case <-ctx.Done():
-				return
-			}
-
-			version, err := FetchLatestVersionFromPURL(ctx, p, client)
-			if err == nil && version != nil {
-				mu.Lock()
-				results[p] = version
-				mu.Unlock()
-			}
-		}(purl)
-	}
-
-	wg.Wait()
-	return results
+	return ParallelMap(ctx, purls, concurrency, func(ctx context.Context, p string) (*Version, error) {
+		return FetchLatestVersionFromPURL(ctx, p, client)
+	})
 }
