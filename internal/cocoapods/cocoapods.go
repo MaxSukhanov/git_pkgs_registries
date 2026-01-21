@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/git-pkgs/registries/internal/core"
-	"github.com/git-pkgs/registries/internal/urlparser"
 )
 
 const (
@@ -113,25 +112,11 @@ func (r *Registry) FetchPackage(ctx context.Context, name string) (*core.Package
 			pkg.Description = latestSpec.Description
 		}
 		pkg.Homepage = latestSpec.Homepage
-		pkg.Repository = extractRepository(latestSpec.Source)
+		pkg.Repository = core.ExtractRepoURL(latestSpec.Source)
 		pkg.Licenses = core.ExtractLicense(latestSpec.License)
 	}
 
 	return pkg, nil
-}
-
-func extractRepository(source map[string]interface{}) string {
-	if git, ok := source["git"].(string); ok {
-		if parsed := urlparser.Parse(git); parsed != "" {
-			return parsed
-		}
-	}
-	if http, ok := source["http"].(string); ok {
-		if parsed := urlparser.Parse(http); parsed != "" {
-			return parsed
-		}
-	}
-	return ""
 }
 
 func (r *Registry) FetchVersions(ctx context.Context, name string) ([]core.Version, error) {

@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/git-pkgs/registries/internal/core"
-	"github.com/git-pkgs/registries/internal/urlparser"
 )
 
 const (
@@ -118,7 +117,7 @@ func (r *Registry) FetchPackage(ctx context.Context, name string) (*core.Package
 		Name:          resp.ID,
 		Description:   coalesceString(latest.Description, resp.Description),
 		Homepage:      extractString(resp.Homepage),
-		Repository:    extractRepoURL(resp.Repository, latest.Repository),
+		Repository:    core.ExtractRepoURLWithFallback(latest.Repository, resp.Repository),
 		Licenses:      core.ExtractLicense(latest.License),
 		Keywords:      extractKeywords(latest.Keywords),
 		Namespace:     extractNamespace(resp.ID),
@@ -258,34 +257,6 @@ func extractString(v interface{}) string {
 	if arr, ok := v.([]interface{}); ok && len(arr) > 0 {
 		if s, ok := arr[0].(string); ok {
 			return s
-		}
-	}
-	return ""
-}
-
-func extractRepoURL(pkgRepo, versionRepo interface{}) string {
-	for _, repo := range []interface{}{versionRepo, pkgRepo} {
-		switch r := repo.(type) {
-		case string:
-			if parsed := urlparser.Parse(r); parsed != "" {
-				return parsed
-			}
-		case map[string]interface{}:
-			if url, ok := r["url"].(string); ok {
-				if parsed := urlparser.Parse(url); parsed != "" {
-					return parsed
-				}
-			}
-		case []interface{}:
-			if len(r) > 0 {
-				if m, ok := r[0].(map[string]interface{}); ok {
-					if url, ok := m["url"].(string); ok {
-						if parsed := urlparser.Parse(url); parsed != "" {
-							return parsed
-						}
-					}
-				}
-			}
 		}
 	}
 	return ""
