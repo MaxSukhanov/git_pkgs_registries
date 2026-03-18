@@ -12,6 +12,14 @@ import (
 	"time"
 )
 
+const (
+	defaultTimeout    = 30 * time.Second
+	defaultMaxRetries = 5
+	defaultBaseDelay  = 50 * time.Millisecond
+	backoffBase       = 2
+	jitterFactor      = 0.1
+)
+
 // RateLimiter controls request pacing.
 type RateLimiter interface {
 	Wait(ctx context.Context) error
@@ -30,11 +38,11 @@ type Client struct {
 func DefaultClient() *Client {
 	return &Client{
 		HTTPClient: &http.Client{
-			Timeout: 30 * time.Second,
+			Timeout: defaultTimeout,
 		},
 		UserAgent:  "registries",
-		MaxRetries: 5,
-		BaseDelay:  50 * time.Millisecond,
+		MaxRetries: defaultMaxRetries,
+		BaseDelay:  defaultBaseDelay,
 	}
 }
 
@@ -53,8 +61,8 @@ func (c *Client) GetBody(ctx context.Context, url string) ([]byte, error) {
 
 	for attempt := 0; attempt <= c.MaxRetries; attempt++ {
 		if attempt > 0 {
-			delay := c.BaseDelay * time.Duration(math.Pow(2, float64(attempt-1)))
-			jitter := time.Duration(float64(delay) * (rand.Float64() * 0.1))
+			delay := c.BaseDelay * time.Duration(math.Pow(backoffBase, float64(attempt-1)))
+			jitter := time.Duration(float64(delay) * (rand.Float64() * jitterFactor))
 			delay += jitter
 
 			select {
@@ -79,10 +87,10 @@ func (c *Client) GetBody(ctx context.Context, url string) ([]byte, error) {
 
 		var httpErr *HTTPError
 		if ok := isHTTPError(err, &httpErr); ok {
-			if httpErr.StatusCode == 404 {
+			if httpErr.StatusCode == http.StatusNotFound {
 				return nil, err
 			}
-			if httpErr.StatusCode == 429 || httpErr.StatusCode >= 500 {
+			if httpErr.StatusCode == http.StatusTooManyRequests || httpErr.StatusCode >= http.StatusInternalServerError {
 				continue
 			}
 			return nil, err
@@ -112,13 +120,13 @@ func (c *Client) doRequest(ctx context.Context, url string) ([]byte, error) {
 		return nil, err
 	}
 
-	if resp.StatusCode >= 400 {
+	if resp.StatusCode >= http.StatusBadRequest {
 		httpErr := &HTTPError{
 			StatusCode: resp.StatusCode,
 			URL:        url,
 			Body:       string(body),
 		}
-		if resp.StatusCode == 429 {
+		if resp.StatusCode == http.StatusTooManyRequests {
 			if retryAfter := resp.Header.Get("Retry-After"); retryAfter != "" {
 				if seconds, err := strconv.Atoi(retryAfter); err == nil {
 					return nil, &RateLimitError{RetryAfter: seconds}

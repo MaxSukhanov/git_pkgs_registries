@@ -46,7 +46,7 @@ func (r *Registry) Ecosystem() string {
 	return ecosystem
 }
 
-func (r *Registry) URLs() core.URLBuilder {
+func (r *Registry) URLs() core.URLBuilder { //nolint:ireturn
 	return r.urls
 }
 
@@ -155,7 +155,7 @@ func parseDescription(content string) descriptionInfo {
 			commitField()
 
 			// Start new field
-			parts := strings.SplitN(line, ":", 2)
+			parts := strings.SplitN(line, ":", 2) //nolint:mnd // key:value split
 			currentField = strings.TrimSpace(parts[0])
 			currentValue.Reset()
 			if len(parts) > 1 {
@@ -369,7 +369,7 @@ func parseMaintainer(s string) core.Maintainer {
 	if len(matches) > 1 {
 		m.Name = strings.TrimSpace(matches[1])
 	}
-	if len(matches) > 2 {
+	if len(matches) > 2 { //nolint:mnd // regex capture group index
 		m.Email = strings.TrimSpace(matches[2])
 	}
 	return m

@@ -55,7 +55,7 @@ func TestFetchPackage(t *testing.T) {
 	if pkg.Licenses != "BSD-3-Clause" {
 		t.Errorf("unexpected license: %q", pkg.Licenses)
 	}
-	if pkg.Namespace != "elm" {
+	if pkg.Namespace != ecosystem {
 		t.Errorf("expected namespace 'elm', got %q", pkg.Namespace)
 	}
 	if pkg.Repository != "https://github.com/elm/json" {

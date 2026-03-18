@@ -44,7 +44,7 @@ func (r *Registry) Ecosystem() string {
 	return ecosystem
 }
 
-func (r *Registry) URLs() core.URLBuilder {
+func (r *Registry) URLs() core.URLBuilder { //nolint:ireturn
 	return r.urls
 }
 
@@ -280,7 +280,7 @@ func extractKeywords(v interface{}) []string {
 
 func extractNamespace(id string) string {
 	if strings.HasPrefix(id, "@") && strings.Contains(id, "/") {
-		parts := strings.SplitN(id, "/", 2)
+		parts := strings.SplitN(id, "/", 2) //nolint:mnd // scope/name split
 		return strings.TrimPrefix(parts[0], "@")
 	}
 	return ""
@@ -312,7 +312,7 @@ func (u *URLs) Download(name, version string) string {
 	}
 	shortName := name
 	if strings.Contains(name, "/") {
-		parts := strings.SplitN(name, "/", 2)
+		parts := strings.SplitN(name, "/", 2) //nolint:mnd // scope/name split
 		shortName = parts[1]
 	}
 	return fmt.Sprintf("%s/%s/-/%s-%s.tgz", u.baseURL, name, shortName, version)
@@ -329,7 +329,7 @@ func (u *URLs) PURL(name, version string) string {
 	namespace := ""
 	pkgName := name
 	if strings.HasPrefix(name, "@") && strings.Contains(name, "/") {
-		parts := strings.SplitN(name, "/", 2)
+		parts := strings.SplitN(name, "/", 2) //nolint:mnd // scope/name split
 		namespace = parts[0]
 		pkgName = parts[1]
 	}

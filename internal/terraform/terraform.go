@@ -44,14 +44,14 @@ func (r *Registry) Ecosystem() string {
 	return ecosystem
 }
 
-func (r *Registry) URLs() core.URLBuilder {
+func (r *Registry) URLs() core.URLBuilder { //nolint:ireturn
 	return r.urls
 }
 
 // parseModuleName parses "namespace/name/provider" format
 func parseModuleName(name string) (namespace, moduleName, provider string, ok bool) {
 	parts := strings.Split(name, "/")
-	if len(parts) == 3 {
+	if len(parts) == 3 { //nolint:mnd // namespace/name/provider
 		return parts[0], parts[1], parts[2], true
 	}
 	return "", "", "", false

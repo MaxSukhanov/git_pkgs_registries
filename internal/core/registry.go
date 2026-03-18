@@ -48,7 +48,7 @@ func Register(ecosystem string, defaultURL string, factory Factory) {
 
 // New creates a new registry for the given ecosystem.
 // If baseURL is empty, the default registry URL is used.
-func New(ecosystem string, baseURL string, client *Client) (Registry, error) {
+func New(ecosystem string, baseURL string, client *Client) (Registry, error) { //nolint:ireturn
 	mu.RLock()
 	factory, ok := factories[ecosystem]
 	defaultURL := defaults[ecosystem]

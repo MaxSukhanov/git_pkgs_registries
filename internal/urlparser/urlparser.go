@@ -116,16 +116,18 @@ func removeChars(s string, chars string) string {
 
 // trimGitSuffix removes .git or .git/ suffix case-insensitively
 func trimGitSuffix(s string) string {
-	if len(s) >= 4 {
-		suffix := strings.ToLower(s[len(s)-4:])
-		if suffix == ".git" {
-			return s[:len(s)-4]
+	const gitSuffix = ".git"
+	const gitSlashSuffix = ".git/"
+	if len(s) >= len(gitSuffix) {
+		suffix := strings.ToLower(s[len(s)-len(gitSuffix):])
+		if suffix == gitSuffix {
+			return s[:len(s)-len(gitSuffix)]
 		}
 	}
-	if len(s) >= 5 {
-		suffix := strings.ToLower(s[len(s)-5:])
-		if suffix == ".git/" {
-			return s[:len(s)-5]
+	if len(s) >= len(gitSlashSuffix) {
+		suffix := strings.ToLower(s[len(s)-len(gitSlashSuffix):])
+		if suffix == gitSlashSuffix {
+			return s[:len(s)-len(gitSlashSuffix)]
 		}
 	}
 	return s
@@ -138,12 +140,13 @@ func removeSchemes(s string) string {
 
 		// Remove scm:git:, scm:svn:, scm:hg: prefixes
 		sLower := strings.ToLower(s)
-		if strings.HasPrefix(sLower, "scm:git:") {
-			s = s[8:]
-		} else if strings.HasPrefix(sLower, "scm:svn:") {
-			s = s[8:]
-		} else if strings.HasPrefix(sLower, "scm:hg:") {
-			s = s[7:]
+		switch {
+		case strings.HasPrefix(sLower, "scm:git:"):
+			s = s[len("scm:git:"):]
+		case strings.HasPrefix(sLower, "scm:svn:"):
+			s = s[len("scm:svn:"):]
+		case strings.HasPrefix(sLower, "scm:hg:"):
+			s = s[len("scm:hg:"):]
 		}
 
 		// Remove standard schemes
@@ -192,8 +195,9 @@ func removeScheme(s string) string {
 func removeAuth(s string) string {
 	// Find @ but make sure we're past any scheme
 	schemeEnd := 0
-	if idx := strings.Index(s, "://"); idx != -1 {
-		schemeEnd = idx + 3
+	const schemeSep = "://"
+	if idx := strings.Index(s, schemeSep); idx != -1 {
+		schemeEnd = idx + len(schemeSep)
 	}
 
 	rest := s[schemeEnd:]
@@ -278,7 +282,7 @@ func ExtractPath(rawURL string) string {
 	}
 
 	// Handle user.github.io/repo pattern
-	if match := githubioRe.FindStringSubmatch(s); len(match) >= 2 {
+	if match := githubioRe.FindStringSubmatch(s); len(match) >= 2 { //nolint:mnd // regex groups
 		user := match[1]
 		rest := githubioRe.ReplaceAllString(s, "")
 		if rest != "" {
@@ -347,7 +351,7 @@ func ExtractHost(rawURL string) string {
 	}
 
 	// Handle user.github.io pattern
-	if match := githubioRe.FindStringSubmatch(s); len(match) >= 3 {
+	if match := githubioRe.FindStringSubmatch(s); len(match) >= 3 { //nolint:mnd // regex groups
 		return "github." + match[2]
 	}
 

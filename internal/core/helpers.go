@@ -13,7 +13,7 @@ const defaultConcurrency = 15
 // NewFromPURL creates a registry client from a PURL and returns the parsed components.
 // Returns the registry, full package name, and version (empty if not in PURL).
 // If the PURL has a repository_url qualifier, it's used as the base URL for private registries.
-func NewFromPURL(purlStr string, client *Client) (Registry, string, string, error) {
+func NewFromPURL(purlStr string, client *Client) (Registry, string, string, error) { //nolint:ireturn
 	p, err := purl.Parse(purlStr)
 	if err != nil {
 		return nil, "", "", err

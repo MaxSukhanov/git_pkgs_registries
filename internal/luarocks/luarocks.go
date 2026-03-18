@@ -43,7 +43,7 @@ func (r *Registry) Ecosystem() string {
 	return ecosystem
 }
 
-func (r *Registry) URLs() core.URLBuilder {
+func (r *Registry) URLs() core.URLBuilder { //nolint:ireturn
 	return r.urls
 }
 
@@ -177,7 +177,7 @@ func (r *Registry) FetchDependencies(ctx context.Context, name, version string) 
 // Examples: "lua >= 5.1", "lpeg", "luasocket >= 3.0"
 func parseDependency(dep string) (name, requirements string) {
 	dep = strings.TrimSpace(dep)
-	parts := strings.SplitN(dep, " ", 2)
+	parts := strings.SplitN(dep, " ", 2) //nolint:mnd // name version split
 	name = parts[0]
 	if len(parts) > 1 {
 		requirements = strings.TrimSpace(parts[1])

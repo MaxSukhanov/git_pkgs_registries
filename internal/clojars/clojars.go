@@ -11,8 +11,9 @@ import (
 )
 
 const (
-	DefaultURL = "https://clojars.org"
-	ecosystem  = "clojars"
+	DefaultURL  = "https://clojars.org"
+	ecosystem   = "clojars"
+	msPerSecond = 1000
 )
 
 func init() {
@@ -43,7 +44,7 @@ func (r *Registry) Ecosystem() string {
 	return ecosystem
 }
 
-func (r *Registry) URLs() core.URLBuilder {
+func (r *Registry) URLs() core.URLBuilder { //nolint:ireturn
 	return r.urls
 }
 
@@ -86,9 +87,8 @@ type depInfo struct {
 // ParseCoordinates parses a Clojars coordinate string (group/artifact or just artifact)
 // If no group is specified, the artifact name is used as both group and artifact
 func ParseCoordinates(name string) (group, artifact string) {
-	parts := strings.SplitN(name, "/", 2)
-	if len(parts) == 2 {
-		return parts[0], parts[1]
+	if before, after, found := strings.Cut(name, "/"); found {
+		return before, after
 	}
 	// Single name means group == artifact
 	return name, name
@@ -168,7 +168,7 @@ func (r *Registry) FetchVersions(ctx context.Context, name string) ([]core.Versi
 		var versionResp versionDetailResponse
 		if err := r.client.GetJSON(ctx, versionURL, &versionResp); err == nil {
 			if versionResp.CreatedEpoch > 0 {
-				versions[i].PublishedAt = time.Unix(versionResp.CreatedEpoch/1000, 0)
+				versions[i].PublishedAt = time.Unix(versionResp.CreatedEpoch/msPerSecond, 0)
 			}
 			if len(versionResp.Licenses) > 0 {
 				versions[i].Licenses = strings.Join(versionResp.Licenses, ",")

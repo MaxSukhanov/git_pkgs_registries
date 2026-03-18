@@ -14,10 +14,14 @@ import (
 )
 
 const (
-	DefaultURL    = "https://repo1.maven.org/maven2"
-	SearchURL     = "https://search.maven.org"
-	ecosystem     = "maven"
+	DefaultURL     = "https://repo1.maven.org/maven2"
+	SearchURL      = "https://search.maven.org"
+	ecosystem      = "maven"
 	maxParentDepth = 5
+	// minCoordParts is the minimum number of parts in a Maven coordinate (group:artifact)
+	minCoordParts = 2
+	// coordPartsWithVersion is the number of parts when version is included (group:artifact:version)
+	coordPartsWithVersion = 3
 )
 
 func init() {
@@ -50,7 +54,7 @@ func (r *Registry) Ecosystem() string {
 	return ecosystem
 }
 
-func (r *Registry) URLs() core.URLBuilder {
+func (r *Registry) URLs() core.URLBuilder { //nolint:ireturn
 	return r.urls
 }
 
@@ -132,10 +136,10 @@ type pomDeveloper struct {
 func ParseCoordinates(coord string) (groupID, artifactID, version string) {
 	// Try colon separator first (traditional maven format)
 	parts := strings.Split(coord, ":")
-	if len(parts) >= 2 {
+	if len(parts) >= minCoordParts {
 		groupID = parts[0]
 		artifactID = parts[1]
-		if len(parts) >= 3 {
+		if len(parts) >= coordPartsWithVersion {
 			version = parts[2]
 		}
 		return
@@ -143,10 +147,10 @@ func ParseCoordinates(coord string) (groupID, artifactID, version string) {
 
 	// Fall back to slash separator (PURL FullName format)
 	parts = strings.Split(coord, "/")
-	if len(parts) >= 2 {
+	if len(parts) >= minCoordParts {
 		groupID = parts[0]
 		artifactID = parts[1]
-		if len(parts) >= 3 {
+		if len(parts) >= coordPartsWithVersion {
 			version = parts[2]
 		}
 	}

@@ -107,7 +107,7 @@ type (
 // If client is nil, DefaultClient() is used.
 //
 // Supported ecosystems: "cargo", "npm", "gem", "pypi", "golang"
-func New(ecosystem string, baseURL string, c *Client) (Registry, error) {
+func New(ecosystem string, baseURL string, c *Client) (Registry, error) { //nolint:ireturn
 	return core.New(ecosystem, baseURL, c)
 }
 
@@ -161,7 +161,7 @@ func ParsePURL(purlStr string) (*PURL, error) {
 
 // NewFromPURL creates a registry client from a PURL and returns the parsed components.
 // Returns the registry, full package name, and version (empty if not in PURL).
-func NewFromPURL(purl string, c *Client) (Registry, string, string, error) {
+func NewFromPURL(purl string, c *Client) (Registry, string, string, error) { //nolint:ireturn
 	return core.NewFromPURL(purl, c)
 }
 

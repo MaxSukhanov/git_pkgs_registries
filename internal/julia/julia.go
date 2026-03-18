@@ -46,7 +46,7 @@ func (r *Registry) Ecosystem() string {
 	return ecosystem
 }
 
-func (r *Registry) URLs() core.URLBuilder {
+func (r *Registry) URLs() core.URLBuilder { //nolint:ireturn
 	return r.urls
 }
 
@@ -101,8 +101,8 @@ func parsePackageToml(content string) packageInfo {
 			continue
 		}
 
-		parts := strings.SplitN(line, "=", 2)
-		if len(parts) != 2 {
+		parts := strings.SplitN(line, "=", 2) //nolint:mnd // key=value split
+		if len(parts) != 2 {                  //nolint:mnd
 			continue
 		}
 
@@ -188,8 +188,8 @@ func parseVersionsToml(content string) map[string]versionInfo {
 		}
 
 		// Parse key-value pairs within version section
-		parts := strings.SplitN(line, "=", 2)
-		if len(parts) != 2 {
+		parts := strings.SplitN(line, "=", 2) //nolint:mnd // key=value split
+		if len(parts) != 2 {                  //nolint:mnd
 			continue
 		}
 
@@ -276,8 +276,8 @@ func parseDepsToml(content string) map[string]map[string]string {
 		}
 
 		// Parse dependency: PackageName = "uuid"
-		parts := strings.SplitN(line, "=", 2)
-		if len(parts) != 2 {
+		parts := strings.SplitN(line, "=", 2) //nolint:mnd // key=value split
+		if len(parts) != 2 {                  //nolint:mnd
 			continue
 		}
 
@@ -300,7 +300,7 @@ func parseDepsToml(content string) map[string]map[string]string {
 func expandVersionRange(versionRange string) []string {
 	// Handle ranges like "1.0-2.0" - we'll store under both endpoints
 	parts := strings.Split(versionRange, "-")
-	if len(parts) == 2 {
+	if len(parts) == 2 { //nolint:mnd // range has start-end
 		return parts
 	}
 	return []string{versionRange}

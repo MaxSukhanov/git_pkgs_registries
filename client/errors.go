@@ -3,6 +3,7 @@ package client
 import (
 	"errors"
 	"fmt"
+	"net/http"
 )
 
 // ErrNotFound is returned when a package or version is not found.
@@ -21,7 +22,7 @@ func (e *HTTPError) Error() string {
 
 // IsNotFound returns true if the error represents a 404 response.
 func (e *HTTPError) IsNotFound() bool {
-	return e.StatusCode == 404
+	return e.StatusCode == http.StatusNotFound
 }
 
 // NotFoundError wraps ErrNotFound with additional context.
