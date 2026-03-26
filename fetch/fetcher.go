@@ -17,6 +17,23 @@ import (
 	"github.com/rs/dnscache"
 )
 
+const (
+	dnsRefreshInterval  = 5 * time.Minute
+	dialTimeout         = 30 * time.Second
+	dialKeepAlive       = 30 * time.Second
+	httpClientTimeout   = 5 * time.Minute
+	maxIdleConns        = 100
+	maxIdleConnsPerHost = 10
+	idleConnTimeout     = 90 * time.Second
+	tlsHandshakeTimeout = 10 * time.Second
+	defaultMaxRetries   = 3
+	defaultBaseDelay    = 500 * time.Millisecond
+	backoffBase         = 2
+	jitterFactor        = 0.1
+	serverErrThreshold  = 500
+	maxErrBodySize      = 1024
+)
+
 var (
 	ErrNotFound     = errors.New("artifact not found")
 	ErrRateLimited  = errors.New("rate limited by upstream")
@@ -91,7 +108,7 @@ func NewFetcher(opts ...Option) *Fetcher {
 	// Create DNS cache with 5 minute refresh interval
 	resolver := &dnscache.Resolver{}
 	go func() {
-		ticker := time.NewTicker(5 * time.Minute)
+		ticker := time.NewTicker(dnsRefreshInterval)
 		defer ticker.Stop()
 		for range ticker.C {
 			resolver.Refresh(true)
@@ -100,13 +117,13 @@ func NewFetcher(opts ...Option) *Fetcher {
 
 	// Create custom dialer with DNS caching
 	dialer := &net.Dialer{
-		Timeout:   30 * time.Second,
-		KeepAlive: 30 * time.Second,
+		Timeout:   dialTimeout,
+		KeepAlive: dialKeepAlive,
 	}
 
 	f := &Fetcher{
 		client: &http.Client{
-			Timeout: 5 * time.Minute, // Artifacts can be large
+			Timeout: httpClientTimeout,
 			Transport: &http.Transport{
 				DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
 					host, port, err := net.SplitHostPort(addr)
@@ -125,16 +142,16 @@ func NewFetcher(opts ...Option) *Fetcher {
 					}
 					return nil, fmt.Errorf("failed to dial any resolved IP")
 				},
-				MaxIdleConns:          100,
-				MaxIdleConnsPerHost:   10,
-				IdleConnTimeout:       90 * time.Second,
-				TLSHandshakeTimeout:   10 * time.Second,
+				MaxIdleConns:          maxIdleConns,
+				MaxIdleConnsPerHost:   maxIdleConnsPerHost,
+				IdleConnTimeout:       idleConnTimeout,
+				TLSHandshakeTimeout:   tlsHandshakeTimeout,
 				ExpectContinueTimeout: 1 * time.Second,
 			},
 		},
 		userAgent:  "git-pkgs-proxy/1.0",
-		maxRetries: 3,
-		baseDelay:  500 * time.Millisecond,
+		maxRetries: defaultMaxRetries,
+		baseDelay:  defaultBaseDelay,
 	}
 	for _, opt := range opts {
 		opt(f)
@@ -150,8 +167,8 @@ func (f *Fetcher) Fetch(ctx context.Context, url string) (*Artifact, error) {
 	for attempt := 0; attempt <= f.maxRetries; attempt++ {
 		if attempt > 0 {
 			// Exponential backoff with 10% jitter to prevent thundering herd
-			delay := f.baseDelay * time.Duration(math.Pow(2, float64(attempt-1)))
-			jitter := time.Duration(float64(delay) * (rand.Float64() * 0.1))
+			delay := f.baseDelay * time.Duration(math.Pow(backoffBase, float64(attempt-1)))
+			jitter := time.Duration(float64(delay) * (rand.Float64() * jitterFactor))
 			delay += jitter
 
 			select {
@@ -230,12 +247,12 @@ func (f *Fetcher) doFetch(ctx context.Context, url string) (*Artifact, error) {
 		_ = resp.Body.Close()
 		return nil, ErrRateLimited
 
-	case resp.StatusCode >= 500:
+	case resp.StatusCode >= serverErrThreshold:
 		_ = resp.Body.Close()
 		return nil, ErrUpstreamDown
 
 	default:
-		body, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, maxErrBodySize))
 		_ = resp.Body.Close()
 		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(body))
 	}

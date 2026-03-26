@@ -57,7 +57,7 @@ func (r *Registry) Ecosystem() string {
 	return ecosystem
 }
 
-func (r *Registry) URLs() core.URLBuilder {
+func (r *Registry) URLs() core.URLBuilder { //nolint:ireturn
 	return r.urls
 }
 
@@ -99,9 +99,8 @@ type fileAttrs struct {
 // parsePackageName parses a package name that may include a channel prefix
 // Format: "channel/name" or just "name" (uses default channel)
 func parsePackageName(name string) (channel, pkgName string) {
-	parts := strings.SplitN(name, "/", 2)
-	if len(parts) == 2 {
-		return parts[0], parts[1]
+	if before, after, found := strings.Cut(name, "/"); found {
+		return before, after
 	}
 	return "", name
 }
@@ -249,15 +248,10 @@ func (r *Registry) FetchDependencies(ctx context.Context, name, version string) 
 }
 
 func parseDependency(dep string) (name, requirements string) {
-	// Conda dependency format: "name version_constraint" or just "name"
-	// Examples: "python >=3.8", "numpy", "pandas >=1.0,<2.0"
 	dep = strings.TrimSpace(dep)
-	parts := strings.SplitN(dep, " ", 2)
-	name = parts[0]
-	if len(parts) > 1 {
-		requirements = strings.TrimSpace(parts[1])
-	}
-	return
+	name, requirements, _ = strings.Cut(dep, " ")
+	requirements = strings.TrimSpace(requirements)
+	return name, requirements
 }
 
 func (r *Registry) FetchMaintainers(ctx context.Context, name string) ([]core.Maintainer, error) {

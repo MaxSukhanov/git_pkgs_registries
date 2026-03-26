@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"unicode"
 
 	"github.com/git-pkgs/registries"
 	"github.com/git-pkgs/registries/client"
@@ -103,12 +104,11 @@ func (r *Resolver) resolveWithoutRegistry(ecosystem, name, version string) (*Art
 
 	case "maven":
 		// Maven name format is "group:artifact", e.g., "com.google.guava:guava"
-		parts := strings.SplitN(name, ":", 2)
-		if len(parts) != 2 {
+		group, artifact, found := strings.Cut(name, ":")
+		if !found {
 			return nil, fmt.Errorf("invalid maven name format, expected group:artifact")
 		}
-		group := strings.ReplaceAll(parts[0], ".", "/")
-		artifact := parts[1]
+		group = strings.ReplaceAll(group, ".", "/")
 		url = fmt.Sprintf("https://repo1.maven.org/maven2/%s/%s/%s/%s-%s.jar", group, artifact, version, artifact, version)
 		filename = fmt.Sprintf("%s-%s.jar", artifact, version)
 
@@ -185,7 +185,7 @@ func encodeGoModule(path string) string {
 	for _, r := range path {
 		if r >= 'A' && r <= 'Z' {
 			b.WriteRune('!')
-			b.WriteRune(r + 32)
+			b.WriteRune(unicode.ToLower(r))
 		} else {
 			b.WriteRune(r)
 		}

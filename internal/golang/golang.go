@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/git-pkgs/registries/internal/core"
 	"github.com/git-pkgs/registries/internal/urlparser"
@@ -45,7 +46,7 @@ func (r *Registry) Ecosystem() string {
 	return ecosystem
 }
 
-func (r *Registry) URLs() core.URLBuilder {
+func (r *Registry) URLs() core.URLBuilder { //nolint:ireturn
 	return r.urls
 }
 
@@ -62,7 +63,7 @@ func encodeForProxy(path string) string {
 	for _, r := range path {
 		if r >= 'A' && r <= 'Z' {
 			b.WriteRune('!')
-			b.WriteRune(r + 32) // lowercase
+			b.WriteRune(unicode.ToLower(r))
 		} else {
 			b.WriteRune(r)
 		}
@@ -112,7 +113,7 @@ func deriveRepoURL(modulePath string) string {
 		strings.HasPrefix(modulePath, "bitbucket.org/") {
 		// Take the first 3 parts as the repo URL
 		parts := strings.Split(modulePath, "/")
-		if len(parts) >= 3 {
+		if len(parts) >= 3 { //nolint:mnd // host/owner/repo
 			return "https://" + strings.Join(parts[:3], "/")
 		}
 		return "https://" + modulePath
@@ -225,7 +226,7 @@ func parseRequireLine(line string) *core.Dependency {
 	}
 
 	parts := strings.Fields(line)
-	if len(parts) < 2 {
+	if len(parts) < 2 { //nolint:mnd // require needs name + version
 		return nil
 	}
 

@@ -13,8 +13,9 @@ import (
 )
 
 const (
-	DefaultURL = "https://package.elm-lang.org"
-	ecosystem  = "elm"
+	DefaultURL   = "https://package.elm-lang.org"
+	ecosystem    = "elm"
+	msPerSecond  = 1000
 )
 
 func init() {
@@ -45,14 +46,14 @@ func (r *Registry) Ecosystem() string {
 	return ecosystem
 }
 
-func (r *Registry) URLs() core.URLBuilder {
+func (r *Registry) URLs() core.URLBuilder { //nolint:ireturn
 	return r.urls
 }
 
 // parsePackageName splits "author/name" into author and name
 func parsePackageName(name string) (author, pkg string) {
-	parts := strings.SplitN(name, "/", 2)
-	if len(parts) == 2 {
+	parts := strings.SplitN(name, "/", 2) //nolint:mnd // author/name split
+	if len(parts) == 2 {                 //nolint:mnd
 		return parts[0], parts[1]
 	}
 	return "", name
@@ -156,7 +157,7 @@ func (r *Registry) FetchVersions(ctx context.Context, name string) ([]core.Versi
 	for _, vt := range vts {
 		versions = append(versions, core.Version{
 			Number:      vt.version,
-			PublishedAt: time.Unix(vt.time/1000, 0), // timestamps are in milliseconds
+			PublishedAt: time.Unix(vt.time/msPerSecond, 0),
 		})
 	}
 

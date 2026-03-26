@@ -44,7 +44,7 @@ func (r *Registry) Ecosystem() string {
 	return ecosystem
 }
 
-func (r *Registry) URLs() core.URLBuilder {
+func (r *Registry) URLs() core.URLBuilder { //nolint:ireturn
 	return r.urls
 }
 
@@ -163,8 +163,8 @@ func (r *Registry) FetchVersions(ctx context.Context, name string) ([]core.Versi
 	// Add versioned formulae (e.g., python@3.11, node@18)
 	for _, vf := range resp.VersionedFormulae {
 		// Extract version from formula name like "python@3.11"
-		parts := strings.SplitN(vf, "@", 2)
-		if len(parts) == 2 {
+		parts := strings.SplitN(vf, "@", 2) //nolint:mnd // name@version split
+		if len(parts) == 2 {                //nolint:mnd
 			versions = append(versions, core.Version{
 				Number: parts[1],
 				Metadata: map[string]any{

@@ -47,7 +47,7 @@ func (r *Registry) Ecosystem() string {
 	return ecosystem
 }
 
-func (r *Registry) URLs() core.URLBuilder {
+func (r *Registry) URLs() core.URLBuilder { //nolint:ireturn
 	return r.urls
 }
 
@@ -166,68 +166,86 @@ func parseCabalFile(content string) cabalInfo {
 			continue
 		}
 
-		// Check for source-repository section
 		if strings.HasPrefix(strings.ToLower(trimmed), "source-repository") {
 			inSourceRepo = true
 			continue
 		}
 
-		// Check for other sections that end source-repo parsing
-		if !strings.HasPrefix(line, " ") && !strings.HasPrefix(line, "\t") {
-			if inSourceRepo && strings.Contains(trimmed, ":") {
-				field := strings.ToLower(strings.TrimSpace(strings.SplitN(trimmed, ":", 2)[0]))
-				if field != "location" && field != "type" && field != "branch" && field != "tag" {
-					inSourceRepo = false
-				}
-			}
-		}
+		inSourceRepo = checkSourceRepoEnd(line, trimmed, inSourceRepo)
 
-		if strings.Contains(trimmed, ":") {
-			parts := strings.SplitN(trimmed, ":", 2)
-			field := strings.ToLower(strings.TrimSpace(parts[0]))
-			value := ""
-			if len(parts) > 1 {
-				value = strings.TrimSpace(parts[1])
-			}
-
+		if field, value, ok := parseCabalField(trimmed); ok {
 			if inSourceRepo && field == "location" {
 				info.SourceRepository = value
 				continue
 			}
-
 			currentField = field
-			switch field {
-			case "name":
-				info.Name = value
-			case "version":
-				info.Version = value
-			case "synopsis":
-				info.Synopsis = value
-			case "description":
-				info.Description = value
-			case "license":
-				info.License = value
-			case "homepage":
-				info.Homepage = value
-			case "author":
-				info.Author = value
-			case "maintainer":
-				info.Maintainer = value
-			case "category":
-				info.Category = value
-			}
-		} else if strings.HasPrefix(line, " ") || strings.HasPrefix(line, "\t") {
-			// Continuation line
-			switch currentField {
-			case "description":
-				info.Description += " " + trimmed
-			case "author":
-				info.Author += " " + trimmed
-			}
+			setCabalField(&info, field, value)
+		} else if isIndented(line) {
+			appendCabalContinuation(&info, currentField, trimmed)
 		}
 	}
 
 	return info
+}
+
+func checkSourceRepoEnd(line, trimmed string, inSourceRepo bool) bool {
+	if isIndented(line) || !inSourceRepo {
+		return inSourceRepo
+	}
+	field, _, ok := parseCabalField(trimmed)
+	if !ok {
+		return inSourceRepo
+	}
+	switch field {
+	case "location", "type", "branch", "tag":
+		return true
+	default:
+		return false
+	}
+}
+
+func isIndented(line string) bool {
+	return strings.HasPrefix(line, " ") || strings.HasPrefix(line, "\t")
+}
+
+func parseCabalField(trimmed string) (field, value string, ok bool) {
+	before, after, found := strings.Cut(trimmed, ":")
+	if !found {
+		return "", "", false
+	}
+	return strings.ToLower(strings.TrimSpace(before)), strings.TrimSpace(after), true
+}
+
+func setCabalField(info *cabalInfo, field, value string) {
+	switch field {
+	case "name":
+		info.Name = value
+	case "version":
+		info.Version = value
+	case "synopsis":
+		info.Synopsis = value
+	case "description":
+		info.Description = value
+	case "license":
+		info.License = value
+	case "homepage":
+		info.Homepage = value
+	case "author":
+		info.Author = value
+	case "maintainer":
+		info.Maintainer = value
+	case "category":
+		info.Category = value
+	}
+}
+
+func appendCabalContinuation(info *cabalInfo, currentField, trimmed string) {
+	switch currentField {
+	case "description":
+		info.Description += " " + trimmed
+	case "author":
+		info.Author += " " + trimmed
+	}
 }
 
 func parsePreferredVersions(content string) []string {
@@ -377,9 +395,7 @@ func parseDependencies(content string) []core.Dependency {
 			}
 
 			// Check if this looks like a new field (has a colon not in version constraint)
-			if strings.Contains(trimmed, ":") {
-				colonIdx := strings.Index(trimmed, ":")
-				beforeColon := trimmed[:colonIdx]
+			if beforeColon, _, found := strings.Cut(trimmed, ":"); found {
 				// If before colon doesn't look like a version constraint, it's a new field
 				if !strings.ContainsAny(beforeColon, "<>=^") {
 					inBuildDepends = false
@@ -412,7 +428,7 @@ func processDeps(line string, deps *[]core.Dependency, seen map[string]bool, dep
 			seen[name] = true
 
 			requirements := ""
-			if len(matches) > 2 {
+			if len(matches) > 2 { //nolint:mnd // regex capture group index
 				requirements = strings.TrimSpace(matches[2])
 			}
 
@@ -449,7 +465,7 @@ func (r *Registry) FetchMaintainers(ctx context.Context, name string) ([]core.Ma
 		m := core.Maintainer{
 			Name: strings.TrimSpace(matches[1]),
 		}
-		if len(matches) > 2 {
+		if len(matches) > 2 { //nolint:mnd // regex capture group index
 			m.Email = strings.TrimSpace(matches[2])
 		}
 		return []core.Maintainer{m}, nil

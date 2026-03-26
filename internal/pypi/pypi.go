@@ -45,7 +45,7 @@ func (r *Registry) Ecosystem() string {
 	return ecosystem
 }
 
-func (r *Registry) URLs() core.URLBuilder {
+func (r *Registry) URLs() core.URLBuilder { //nolint:ireturn
 	return r.urls
 }
 
@@ -284,7 +284,7 @@ func (r *Registry) FetchDependencies(ctx context.Context, name, version string) 
 
 func parsePEP508(dep string) (name, requirements, envMarker string) {
 	// Split on ; first to get environment markers
-	parts := strings.SplitN(dep, ";", 2)
+	parts := strings.SplitN(dep, ";", 2) //nolint:mnd // dep;marker split
 	nameAndVersion := strings.TrimSpace(parts[0])
 	if len(parts) > 1 {
 		envMarker = strings.TrimSpace(parts[1])

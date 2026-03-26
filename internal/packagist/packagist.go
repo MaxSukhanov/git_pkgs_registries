@@ -44,7 +44,7 @@ func (r *Registry) Ecosystem() string {
 	return ecosystem
 }
 
-func (r *Registry) URLs() core.URLBuilder {
+func (r *Registry) URLs() core.URLBuilder { //nolint:ireturn
 	return r.urls
 }
 
@@ -111,7 +111,7 @@ func (r *Registry) FetchPackage(ctx context.Context, name string) (*core.Package
 
 	// Extract namespace (vendor) from name
 	var namespace string
-	if parts := strings.SplitN(name, "/", 2); len(parts) == 2 {
+	if parts := strings.SplitN(name, "/", 2); len(parts) == 2 { //nolint:mnd // vendor/package split
 		namespace = parts[0]
 	}
 

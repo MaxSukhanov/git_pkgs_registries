@@ -11,6 +11,13 @@ import (
 	circuit "github.com/rubyist/circuitbreaker"
 )
 
+const (
+	cbInitialInterval = 30 * time.Second
+	cbMaxInterval     = 5 * time.Minute
+	cbThreshold       = 5
+	maxURLTruncate    = 50
+)
+
 // CircuitBreakerFetcher wraps a Fetcher with per-registry circuit breakers.
 type CircuitBreakerFetcher struct {
 	fetcher  *Fetcher
@@ -47,14 +54,14 @@ func (cbf *CircuitBreakerFetcher) getBreaker(registry string) *circuit.Breaker {
 	// Create new circuit breaker with exponential backoff
 	// Trips after 5 consecutive failures
 	expBackoff := backoff.NewExponentialBackOff()
-	expBackoff.InitialInterval = 30 * time.Second
-	expBackoff.MaxInterval = 5 * time.Minute
+	expBackoff.InitialInterval = cbInitialInterval
+	expBackoff.MaxInterval = cbMaxInterval
 	expBackoff.Multiplier = 2.0
 	expBackoff.Reset()
 
 	opts := &circuit.Options{
 		BackOff:    expBackoff,
-		ShouldTrip: circuit.ThresholdTripFunc(5),
+		ShouldTrip: circuit.ThresholdTripFunc(cbThreshold),
 	}
 	breaker = circuit.NewBreakerWithOptions(opts)
 
@@ -112,7 +119,7 @@ func extractRegistry(rawURL string) string {
 	parsed, err := url.Parse(rawURL)
 	if err != nil || parsed.Host == "" {
 		// Fallback to simple truncation
-		if len(rawURL) > 50 {
+		if len(rawURL) > maxURLTruncate {
 			return rawURL[:50]
 		}
 		return rawURL
