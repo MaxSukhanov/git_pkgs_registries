@@ -3,6 +3,7 @@ package fetch
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"net/url"
 	"sync"
 	"time"
@@ -71,6 +72,11 @@ func (cbf *CircuitBreakerFetcher) getBreaker(registry string) *circuit.Breaker {
 
 // Fetch wraps the underlying fetcher's Fetch with circuit breaker logic.
 func (cbf *CircuitBreakerFetcher) Fetch(ctx context.Context, fetchURL string) (*Artifact, error) {
+	return cbf.FetchWithHeaders(ctx, fetchURL, nil)
+}
+
+// FetchWithHeaders wraps the underlying fetcher's FetchWithHeaders with circuit breaker logic.
+func (cbf *CircuitBreakerFetcher) FetchWithHeaders(ctx context.Context, fetchURL string, headers http.Header) (*Artifact, error) {
 	// Extract registry from URL for circuit breaker selection
 	registry := extractRegistry(fetchURL)
 	breaker := cbf.getBreaker(registry)
@@ -84,7 +90,7 @@ func (cbf *CircuitBreakerFetcher) Fetch(ctx context.Context, fetchURL string) (*
 	var artifact *Artifact
 	err := breaker.Call(func() error {
 		var fetchErr error
-		artifact, fetchErr = cbf.fetcher.Fetch(ctx, fetchURL)
+		artifact, fetchErr = cbf.fetcher.FetchWithHeaders(ctx, fetchURL, headers)
 		return fetchErr
 	}, 0)
 

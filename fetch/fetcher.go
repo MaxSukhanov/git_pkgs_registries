@@ -51,6 +51,7 @@ type Artifact struct {
 // FetcherInterface defines the interface for artifact fetchers.
 type FetcherInterface interface {
 	Fetch(ctx context.Context, url string) (*Artifact, error)
+	FetchWithHeaders(ctx context.Context, url string, headers http.Header) (*Artifact, error)
 	Head(ctx context.Context, url string) (size int64, contentType string, err error)
 }
 
@@ -162,6 +163,12 @@ func NewFetcher(opts ...Option) *Fetcher {
 // Fetch downloads an artifact from the given URL.
 // The caller must close the returned Artifact.Body when done.
 func (f *Fetcher) Fetch(ctx context.Context, url string) (*Artifact, error) {
+	return f.FetchWithHeaders(ctx, url, nil)
+}
+
+// FetchWithHeaders downloads an artifact from the given URL with additional HTTP headers.
+// The caller must close the returned Artifact.Body when done.
+func (f *Fetcher) FetchWithHeaders(ctx context.Context, url string, headers http.Header) (*Artifact, error) {
 	var lastErr error
 
 	for attempt := 0; attempt <= f.maxRetries; attempt++ {
@@ -178,7 +185,7 @@ func (f *Fetcher) Fetch(ctx context.Context, url string) (*Artifact, error) {
 			}
 		}
 
-		artifact, err := f.doFetch(ctx, url)
+		artifact, err := f.doFetch(ctx, url, headers)
 		if err == nil {
 			return artifact, nil
 		}
@@ -202,7 +209,7 @@ func (f *Fetcher) Fetch(ctx context.Context, url string) (*Artifact, error) {
 	return nil, lastErr
 }
 
-func (f *Fetcher) doFetch(ctx context.Context, url string) (*Artifact, error) {
+func (f *Fetcher) doFetch(ctx context.Context, url string, headers http.Header) (*Artifact, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("creating request: %w", err)
@@ -211,7 +218,14 @@ func (f *Fetcher) doFetch(ctx context.Context, url string) (*Artifact, error) {
 	req.Header.Set("User-Agent", f.userAgent)
 	req.Header.Set("Accept", "*/*")
 
-	// Add authentication header if configured
+	// Add caller-provided headers
+	for key, values := range headers {
+		for _, v := range values {
+			req.Header.Set(key, v)
+		}
+	}
+
+	// Add authentication header if configured (overrides caller headers)
 	if f.authFn != nil {
 		if name, value := f.authFn(url); name != "" && value != "" {
 			req.Header.Set(name, value)
