@@ -286,6 +286,74 @@ func TestFetchRetryWithJitter(t *testing.T) {
 	}
 }
 
+func TestFetchWithHeaders(t *testing.T) {
+	var receivedAuth string
+	var receivedCustom string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		receivedAuth = r.Header.Get("Authorization")
+		receivedCustom = r.Header.Get("X-Custom")
+		_, _ = w.Write([]byte("ok"))
+	}))
+	defer server.Close()
+
+	f := NewFetcher()
+	headers := http.Header{
+		"Authorization": {"Bearer test-token"},
+		"X-Custom":      {"custom-value"},
+	}
+	artifact, err := f.FetchWithHeaders(context.Background(), server.URL+"/test.tgz", headers)
+	if err != nil {
+		t.Fatalf("FetchWithHeaders failed: %v", err)
+	}
+	defer func() { _ = artifact.Body.Close() }()
+
+	if receivedAuth != "Bearer test-token" {
+		t.Errorf("Authorization = %q, want %q", receivedAuth, "Bearer test-token")
+	}
+	if receivedCustom != "custom-value" {
+		t.Errorf("X-Custom = %q, want %q", receivedCustom, "custom-value")
+	}
+}
+
+func TestFetchWithHeadersNil(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte("ok"))
+	}))
+	defer server.Close()
+
+	f := NewFetcher()
+	artifact, err := f.FetchWithHeaders(context.Background(), server.URL+"/test.tgz", nil)
+	if err != nil {
+		t.Fatalf("FetchWithHeaders with nil headers failed: %v", err)
+	}
+	_ = artifact.Body.Close()
+}
+
+func TestFetchWithHeadersAuthFnOverrides(t *testing.T) {
+	var receivedAuth string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		receivedAuth = r.Header.Get("Authorization")
+		_, _ = w.Write([]byte("ok"))
+	}))
+	defer server.Close()
+
+	f := NewFetcher(WithAuthFunc(func(url string) (string, string) {
+		return "Authorization", "Bearer from-authfn"
+	}))
+	headers := http.Header{
+		"Authorization": {"Bearer from-headers"},
+	}
+	artifact, err := f.FetchWithHeaders(context.Background(), server.URL+"/test.tgz", headers)
+	if err != nil {
+		t.Fatalf("FetchWithHeaders failed: %v", err)
+	}
+	defer func() { _ = artifact.Body.Close() }()
+
+	if receivedAuth != "Bearer from-authfn" {
+		t.Errorf("Authorization = %q, want %q (authFn should override)", receivedAuth, "Bearer from-authfn")
+	}
+}
+
 func TestFetchDNSCaching(t *testing.T) {
 	requestCount := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -351,9 +351,18 @@ io.Copy(dst, artifact.Body)
 
 The fetcher uses DNS caching (5-minute refresh), connection pooling, and a 5-minute timeout suited for large artifacts. It retries on rate limits and server errors with exponential backoff and jitter.
 
+### Per-request headers
+
+Use `FetchWithHeaders` to pass HTTP headers for a single request. This is useful when the auth token varies per request or is obtained dynamically (e.g. Docker Hub token exchange):
+
+```go
+headers := http.Header{"Authorization": {"Bearer " + token}}
+artifact, err := f.FetchWithHeaders(ctx, url, headers)
+```
+
 ### Authentication
 
-Pass a function that returns auth headers per URL:
+For static credentials that apply to all requests matching a URL pattern, pass a function at construction time:
 
 ```go
 f := fetch.NewFetcher(
@@ -365,6 +374,8 @@ f := fetch.NewFetcher(
     }),
 )
 ```
+
+When both `WithAuthFunc` and `FetchWithHeaders` set the same header, `WithAuthFunc` takes precedence.
 
 ### Circuit breaker
 
