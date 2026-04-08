@@ -65,6 +65,30 @@ func TestFetchPackage(t *testing.T) {
 	}
 }
 
+func TestFetchPackageEscapesName(t *testing.T) {
+	var gotPath, gotQuery string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		gotQuery = r.URL.RawQuery
+		w.WriteHeader(404)
+	}))
+	defer server.Close()
+
+	reg := New(server.URL, core.DefaultClient())
+	_, _ = reg.FetchPackage(context.Background(), "requests?evil=1#frag")
+
+	// Without escaping the ? starts a query string client-side and the
+	// server sees path /pypi/requests with query evil=1/json. With
+	// escaping the whole name is one path segment, the # doesn't
+	// truncate as a fragment, and /json survives at the end.
+	if gotQuery != "" {
+		t.Errorf("query string leaked: %q (path was %q)", gotQuery, gotPath)
+	}
+	if gotPath != "/pypi/requests?evil=1#frag/json" {
+		t.Errorf("path = %q, expected name kept intact with /json suffix", gotPath)
+	}
+}
+
 func TestFetchPackageWithLicenseExpression(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		resp := packageResponse{

@@ -4,6 +4,7 @@ package deno
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
@@ -87,7 +88,7 @@ type directoryEntry struct {
 }
 
 func (r *Registry) FetchPackage(ctx context.Context, name string) (*core.Package, error) {
-	url := fmt.Sprintf("%s/v2/modules/%s", r.baseURL, name)
+	url := fmt.Sprintf("%s/v2/modules/%s", r.baseURL, url.PathEscape(name))
 
 	var resp moduleInfoResponse
 	if err := r.client.GetJSON(ctx, url, &resp); err != nil {
@@ -115,7 +116,7 @@ func (r *Registry) FetchPackage(ctx context.Context, name string) (*core.Package
 }
 
 func (r *Registry) FetchVersions(ctx context.Context, name string) ([]core.Version, error) {
-	url := fmt.Sprintf("%s/v2/modules/%s", r.baseURL, name)
+	url := fmt.Sprintf("%s/v2/modules/%s", r.baseURL, url.PathEscape(name))
 
 	var resp moduleInfoResponse
 	if err := r.client.GetJSON(ctx, url, &resp); err != nil {

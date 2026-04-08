@@ -4,6 +4,7 @@ package pypi
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"regexp"
 	"strings"
 	"time"
@@ -86,7 +87,7 @@ type versionInfoResponse struct {
 }
 
 func (r *Registry) FetchPackage(ctx context.Context, name string) (*core.Package, error) {
-	url := fmt.Sprintf("%s/pypi/%s/json", r.baseURL, name)
+	url := fmt.Sprintf("%s/pypi/%s/json", r.baseURL, url.PathEscape(name))
 
 	var resp packageResponse
 	if err := r.client.GetJSON(ctx, url, &resp); err != nil {
@@ -190,7 +191,7 @@ func normalizeName(name string) string {
 }
 
 func (r *Registry) FetchVersions(ctx context.Context, name string) ([]core.Version, error) {
-	url := fmt.Sprintf("%s/pypi/%s/json", r.baseURL, name)
+	url := fmt.Sprintf("%s/pypi/%s/json", r.baseURL, url.PathEscape(name))
 
 	var resp packageResponse
 	if err := r.client.GetJSON(ctx, url, &resp); err != nil {
@@ -246,7 +247,7 @@ func (r *Registry) FetchVersions(ctx context.Context, name string) ([]core.Versi
 var pep508NameRegex = regexp.MustCompile(`^([A-Za-z0-9][-A-Za-z0-9._]*[A-Za-z0-9]|[A-Za-z0-9])(\s*\[.*?\])?`)
 
 func (r *Registry) FetchDependencies(ctx context.Context, name, version string) ([]core.Dependency, error) {
-	url := fmt.Sprintf("%s/pypi/%s/%s/json", r.baseURL, name, version)
+	url := fmt.Sprintf("%s/pypi/%s/%s/json", r.baseURL, url.PathEscape(name), url.PathEscape(version))
 
 	var resp versionInfoResponse
 	if err := r.client.GetJSON(ctx, url, &resp); err != nil {

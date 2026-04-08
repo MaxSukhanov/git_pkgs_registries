@@ -4,6 +4,7 @@ package cargo
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
@@ -102,7 +103,7 @@ type ownerInfo struct {
 }
 
 func (r *Registry) FetchPackage(ctx context.Context, name string) (*core.Package, error) {
-	url := fmt.Sprintf("%s/api/v1/crates/%s", r.baseURL, name)
+	url := fmt.Sprintf("%s/api/v1/crates/%s", r.baseURL, url.PathEscape(name))
 
 	var resp crateResponse
 	if err := r.client.GetJSON(ctx, url, &resp); err != nil {
@@ -132,7 +133,7 @@ func (r *Registry) FetchPackage(ctx context.Context, name string) (*core.Package
 }
 
 func (r *Registry) FetchVersions(ctx context.Context, name string) ([]core.Version, error) {
-	url := fmt.Sprintf("%s/api/v1/crates/%s", r.baseURL, name)
+	url := fmt.Sprintf("%s/api/v1/crates/%s", r.baseURL, url.PathEscape(name))
 
 	var resp crateResponse
 	if err := r.client.GetJSON(ctx, url, &resp); err != nil {
@@ -181,7 +182,7 @@ func (r *Registry) FetchVersions(ctx context.Context, name string) ([]core.Versi
 }
 
 func (r *Registry) FetchDependencies(ctx context.Context, name, version string) ([]core.Dependency, error) {
-	url := fmt.Sprintf("%s/api/v1/crates/%s/%s/dependencies", r.baseURL, name, version)
+	url := fmt.Sprintf("%s/api/v1/crates/%s/%s/dependencies", r.baseURL, url.PathEscape(name), url.PathEscape(version))
 
 	var resp dependenciesResponse
 	if err := r.client.GetJSON(ctx, url, &resp); err != nil {
@@ -216,7 +217,7 @@ func mapScope(kind string) core.Scope {
 }
 
 func (r *Registry) FetchMaintainers(ctx context.Context, name string) ([]core.Maintainer, error) {
-	url := fmt.Sprintf("%s/api/v1/crates/%s/owner_user", r.baseURL, name)
+	url := fmt.Sprintf("%s/api/v1/crates/%s/owner_user", r.baseURL, url.PathEscape(name))
 
 	var resp ownersResponse
 	if err := r.client.GetJSON(ctx, url, &resp); err != nil {
