@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"strings"
 	"unicode"
 
@@ -14,6 +15,7 @@ import (
 var (
 	ErrUnsupportedEcosystem = errors.New("unsupported ecosystem")
 	ErrNoDownloadURL        = errors.New("no download URL available")
+	ErrUnsafeURL            = errors.New("unsafe download URL from registry metadata")
 )
 
 // Registry provides package metadata and URL information for artifact resolution.
@@ -140,21 +142,15 @@ func (r *Resolver) resolveFromMetadata(ctx context.Context, reg Registry, name, 
 			continue
 		}
 
-		// Look for download URL in metadata
+		// Look for download URL in metadata. These come from the
+		// registry's API response, not from us, so they need checking
+		// before anyone fetches them.
 		if v.Metadata != nil {
-			if url, ok := v.Metadata["download_url"].(string); ok && url != "" {
-				return &ArtifactInfo{
-					URL:       url,
-					Filename:  filenameFromURL(url),
-					Integrity: v.Integrity,
-				}, nil
+			if u, ok := v.Metadata["download_url"].(string); ok && u != "" {
+				return artifactFromMetadataURL(u, v.Integrity)
 			}
-			if url, ok := v.Metadata["tarball"].(string); ok && url != "" {
-				return &ArtifactInfo{
-					URL:       url,
-					Filename:  filenameFromURL(url),
-					Integrity: v.Integrity,
-				}, nil
+			if u, ok := v.Metadata["tarball"].(string); ok && u != "" {
+				return artifactFromMetadataURL(u, v.Integrity)
 			}
 		}
 
@@ -162,6 +158,35 @@ func (r *Resolver) resolveFromMetadata(ctx context.Context, reg Registry, name, 
 	}
 
 	return nil, ErrNotFound
+}
+
+func artifactFromMetadataURL(raw, integrity string) (*ArtifactInfo, error) {
+	if err := checkMetadataURL(raw); err != nil {
+		return nil, err
+	}
+	return &ArtifactInfo{
+		URL:       raw,
+		Filename:  filenameFromURL(raw),
+		Integrity: integrity,
+	}, nil
+}
+
+// checkMetadataURL rejects download URLs from registry responses that
+// could direct the fetcher somewhere it shouldn't go. A compromised or
+// MITM'd registry could otherwise hand back file:// or a cloud metadata
+// endpoint.
+func checkMetadataURL(raw string) error {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return fmt.Errorf("%w: %v", ErrUnsafeURL, err)
+	}
+	if u.Scheme != "https" {
+		return fmt.Errorf("%w: scheme %q", ErrUnsafeURL, u.Scheme)
+	}
+	if u.Hostname() == "" {
+		return fmt.Errorf("%w: empty host", ErrUnsafeURL)
+	}
+	return nil
 }
 
 func filenameFromURL(url string) string {
