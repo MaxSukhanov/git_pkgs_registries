@@ -4,6 +4,7 @@ package cocoapods
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
@@ -79,7 +80,7 @@ type ownerInfo struct {
 }
 
 func (r *Registry) FetchPackage(ctx context.Context, name string) (*core.Package, error) {
-	url := fmt.Sprintf("%s/api/v1/pods/%s", r.baseURL, name)
+	url := fmt.Sprintf("%s/api/v1/pods/%s", r.baseURL, url.PathEscape(name))
 
 	var resp podResponse
 	if err := r.client.GetJSON(ctx, url, &resp); err != nil {
@@ -120,7 +121,7 @@ func (r *Registry) FetchPackage(ctx context.Context, name string) (*core.Package
 }
 
 func (r *Registry) FetchVersions(ctx context.Context, name string) ([]core.Version, error) {
-	url := fmt.Sprintf("%s/api/v1/pods/%s", r.baseURL, name)
+	url := fmt.Sprintf("%s/api/v1/pods/%s", r.baseURL, url.PathEscape(name))
 
 	var resp podResponse
 	if err := r.client.GetJSON(ctx, url, &resp); err != nil {
@@ -143,7 +144,7 @@ func (r *Registry) FetchVersions(ctx context.Context, name string) ([]core.Versi
 }
 
 func (r *Registry) FetchDependencies(ctx context.Context, name, version string) ([]core.Dependency, error) {
-	url := fmt.Sprintf("%s/api/v1/pods/%s", r.baseURL, name)
+	url := fmt.Sprintf("%s/api/v1/pods/%s", r.baseURL, url.PathEscape(name))
 
 	var resp podResponse
 	if err := r.client.GetJSON(ctx, url, &resp); err != nil {
@@ -195,7 +196,7 @@ func formatRequirement(req interface{}) string {
 }
 
 func (r *Registry) FetchMaintainers(ctx context.Context, name string) ([]core.Maintainer, error) {
-	url := fmt.Sprintf("%s/api/v1/pods/%s", r.baseURL, name)
+	url := fmt.Sprintf("%s/api/v1/pods/%s", r.baseURL, url.PathEscape(name))
 
 	var resp podResponse
 	if err := r.client.GetJSON(ctx, url, &resp); err != nil {
